@@ -4,10 +4,13 @@ import pickle
 import numpy as np
 from huepy import bad, bold, red
 
-def getAgentObject(vehicles):
-    for vehicle in vehicles:
-        if vehicle.agent:
-            return vehicle
+from v2i.src.core.constants import LANE_MAP_INDEX_MAPPING
+
+def getAgentObject(laneMap):
+    for lane in laneMap.keys():
+        for veh in laneMap[lane]:
+            if veh[LANE_MAP_INDEX_MAPPING['agent']]:
+                return veh
     return None
 
 def checkFileExists(file):
@@ -95,3 +98,6 @@ def mergeDicts(d1, d2):
     assert len(d) == len(d1) + len(d2)
     
     return d
+
+def sortListofList(laneMap, index, reverse=False):
+    laneMap.sort(key = lambda laneMap: laneMap[index], reverse=reverse)

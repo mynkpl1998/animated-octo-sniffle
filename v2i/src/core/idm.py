@@ -1,6 +1,7 @@
 import numpy as np
 
-from v2i.src.core.constants import SCENE_CONSTS, IDM_CONSTS
+from v2i.src.core.constants import SCENE_CONSTS, IDM_CONSTS, LANE_MAP_INDEX_MAPPING
+from v2i.src.core.common import sortListofList
 
 class idm:
 
@@ -10,32 +11,19 @@ class idm:
         #----- Vectorized functions -----#
         self.vecBumpBumpDistance = np.vectorize(self.BumpBumpDist)
         self.vecidmAcc = np.vectorize(self.idmAcc)
+        self.vecDistTravelled = np.vectorize(self.distanceTravelled)
+        self.vecNewSpeed = np.vectorize(self.newSpeed)
+        self.vecUpdateKey = np.vectorize(self.updateKey)
         #----- Vectorized functions -----#
     
-    def extractVehiclesByLane(self, vehicles):
-        laneMap = {}
-        for lane in range(0, self.simArgs.getValue("lanes")):
-            laneMap[lane] = []
-        
-        for vehicle in vehicles:
-            vehLane = vehicle.lane
-            laneMap[vehLane].append(vehicle)
-        return laneMap
-    
-    def getObjectsPos(self, laneMap):
-        pos = []
-        for vehicle in laneMap:
-            pos.append(vehicle.pos)
-        return np.array(pos)
-    
-    def getObjectsSpeed(self, laneMap):
-        speeds = []
-        for vehicle in laneMap:
-            speeds.append(vehicle.speed)
-        return np.array(speeds)
+    def getElementsbyKey(self, laneMap, key):
+        prop = []
+        for veh in laneMap:
+            prop.append(veh[LANE_MAP_INDEX_MAPPING[key]])
+        return np.array(prop)
     
     def posDiff(self, laneMap):
-        a = self.getObjectsPos(laneMap)
+        a = self.getElementsbyKey(laneMap, 'pos')
         b = np.zeros(a.shape)
         b[1:] = a[0:-1]
         diff = a - b
@@ -43,7 +31,7 @@ class idm:
         return diff
     
     def relativeSpeed(self, laneMap):
-        a = self.getObjectsSpeed(laneMap)
+        a = self.getElementsbyKey(laneMap, 'speed')
         b = np.zeros(a.shape)
         b[1:] = a[0:-1]
         diff = a - b
@@ -57,30 +45,46 @@ class idm:
         sStar = IDM_CONSTS['MIN_SPACING'] + (speed * IDM_CONSTS['HEADWAY_TIME']) + ((speed * speedDiff)/(2 * np.sqrt(IDM_CONSTS['MAX_ACC'] * IDM_CONSTS['DECELERATION_RATE'])))
         acc = IDM_CONSTS['MAX_ACC'] * (1 - ((speed / self.simArgs.getValue('max-speed'))**IDM_CONSTS['DELTA']) - ((sStar/sAlpha)**2))
         return acc
-        
     
-    def step(self, vehicles):
+    def distanceTravelled(self, speed, acc, tPeriod):
+        dist = (speed * tPeriod) + (0.5 * acc * tPeriod * tPeriod)
+        return dist
+    
+    def newSpeed(self, speed, acc, tPeriod):
+        v = speed + (acc * tPeriod)
+        return v
+    
+    def newPosition(self, oldPos, distTravelled):
+        return oldPos - distTravelled
+    
+    def updateKey(self, laneMap, key, values):
+        for idx, veh in enumerate(laneMap):
+            veh[LANE_MAP_INDEX_MAPPING[key]] = values[idx]
+    
+    def step(self, laneMap):
         
-        # Extract vehicles object - lane by lane
-        laneMap = self.extractVehiclesByLane(vehicles)
-
         # Sort the list in-place by post
-        
-        for lane in range(0, self.simArgs.getValue("lanes")):
-            laneMap[lane].sort(key=lambda veh: veh.pos, reverse=False)
-
         for lane in range(0, self.simArgs.getValue('lanes')):
-            oldPos = self.getObjectsPos(laneMap[lane])
-            posDiff = self.posDiff(laneMap[lane])
+            sortListofList(laneMap[lane], LANE_MAP_INDEX_MAPPING['pos'], reverse=False)
+        
+        for lane in range(0, self.simArgs.getValue('lanes')):
+            oldPos = self.getElementsbyKey(laneMap[lane], 'pos')
+            possDiff = self.posDiff(laneMap[lane])
             speedDiff = self.relativeSpeed(laneMap[lane])
-            speed = self.getObjectsSpeed(laneMap[lane])
-            sAlpha = self.vecBumpBumpDistance(posDiff)
-            acc = self.vecidmAcc(sAlpha, speedDiff, speed)
-            print(acc)
+            sAlpha = self.vecBumpBumpDistance(possDiff)
+            speed = self.getElementsbyKey(laneMap[lane], 'speed')
+            idmAcc = self.vecidmAcc(sAlpha, speedDiff, speed)
+
+            distTravelledVec = self.vecDistTravelled(speed, idmAcc, self.simArgs.getValue('t-period'))
+            newSpeedVec = self.vecNewSpeed(speed, idmAcc, self.simArgs.getValue('t-period'))
+            
+            # ---- Failsafe ---- #
+            distTravelledVec[distTravelledVec < 0] = 0.0
+            newSpeedVec[newSpeedVec < 0] = 0.0
+            # ---- Failsafe ---- #
+
+            newPosVec = self.newPosition(oldPos, distTravelledVec)
+
+            self.updateKey(laneMap[lane], 'pos', newPosVec)
+            self.updateKey(laneMap[lane], 'speed', newSpeedVec)
         
-        '''
-        for lane in range(0, self.simArgs.getValue('lanes')):
-            print("lane %d : "%(lane))
-            for vehicle in laneMap[lane]:
-                print(vehicle.pos)
-        '''

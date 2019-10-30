@@ -65,14 +65,17 @@ class V2I(gym.Env):
         self.egoMidIndex = int(len(self.startPoints)/2.0)
     
     def initVehicles(self, prob):
-        self.vehicles = []
+        # create empty map
+        self.laneMap = {}
+        for lane in range(0, self.simArgs.getValue("lanes")):
+            self.laneMap[lane] = []
 
         # Init id count
         self.vehID = 0
 
         # Generate random lane for ego-vehicle
         randomLane = np.random.randint(0, self.simArgs.getValue("lanes"))
-         
+        
         # Add non-ego vehicles
         for lane in range(self.simArgs.getValue("lanes")):
             for idx, pos in enumerate(self.startPoints):
@@ -80,15 +83,23 @@ class V2I(gym.Env):
                     pass
                 else:
                     if np.random.rand() <= prob:
-                        veh = vehicle(lane, False, pos, self.vehID, 0.0, 0.0)
+                        #veh = vehicle(lane, False, pos, self.vehID, 0.0, 0.0)
+                        # (lane, agent, position, vehicleID, speed, acceleration)
+                        veh = [lane, False, pos, self.vehID, 0.0, 0.0]
                         self.vehID += 1
-                        self.vehicles.append(veh)
+                        self.laneMap[lane].append(veh)
         
         # Add ego-vehicle to list
-        self.vehicles.append(vehicle(randomLane, True, self.startPoints[self.egoMidIndex], self.vehID, 0.0, 0.0))
+        veh = [randomLane, True, self.startPoints[self.egoMidIndex], self.vehID, 0.0, 0.0]
+        self.laneMap[randomLane].append(veh)
         self.vehID += 1
-        assert self.vehicles[-1].vehID+1 == len(self.vehicles)
-        
+
+        # Assert the vehID and total number of vehicles in lane Map
+        count = 0
+        for lane in range(0, self.simArgs.getValue('lanes')):
+            count += len(self.laneMap[lane])
+        assert count == self.vehID
+
     def reset(self, prob=None):
         
         # Get episode density
@@ -98,11 +109,16 @@ class V2I(gym.Env):
         # Get initial vehicles and thier positions
         self.initVehicles(prob)
 
+        
         # Render to display
         if self.simArgs.getValue("render"):
-            self.uiHandler.updateScreen(self.vehicles)
+            self.uiHandler.updateScreen(self.laneMap)
 
 
     def step(self):
         
-        self.idmHandler.step(self.vehicles)
+        self.idmHandler.step(self.laneMap)
+
+        # Render to display
+        if self.simArgs.getValue("render"):
+            self.uiHandler.updateScreen(self.laneMap)

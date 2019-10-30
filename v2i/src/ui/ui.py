@@ -2,7 +2,7 @@ import time
 import pygame
 import numpy as np
 
-from v2i.src.core.constants import UI_CONSTS, SCENE_CONSTS
+from v2i.src.core.constants import UI_CONSTS, SCENE_CONSTS, LANE_MAP_INDEX_MAPPING
 from v2i.src.core.common import raiseValueError, getAgentObject
 
 class ui:
@@ -108,29 +108,31 @@ class ui:
         return pygame.draw.circle(screen, color, center, radius, width)
     
     def drawCars(self, laneMap):
-        for vehicle in laneMap:
-            lane = vehicle.lane
-            pos = vehicle.pos
-            agent = vehicle.agent
-            color = self.colorYellow
-            if agent:
-                color = self.colorLime
-            self.drawRect(self.screen, color, (self.laneCoordinates[lane], pos * UI_CONSTS['SCALE']), UI_CONSTS['CAR_WIDTH'] , SCENE_CONSTS['CAR_LENGTH'] * UI_CONSTS['SCALE'], width=0)
+        for lane in range(self.simArgs.getValue('lanes')):
+            for veh in laneMap[lane]:
+                lane = veh[LANE_MAP_INDEX_MAPPING['lane']]
+                pos = veh[LANE_MAP_INDEX_MAPPING['pos']]
+                agent = veh[LANE_MAP_INDEX_MAPPING['agent']]
+                color = self.colorYellow
+                if agent:
+                    color = self.colorLime
+                self.drawRect(self.screen, color, (self.laneCoordinates[lane], pos * UI_CONSTS['SCALE']), UI_CONSTS['CAR_WIDTH'] , SCENE_CONSTS['CAR_LENGTH'] * UI_CONSTS['SCALE'], width=0)
     
     def drawInfoBoard(self, vehicles):
         vehicle = getAgentObject(vehicles)
+        
         if vehicle is None:
             raiseValueError("ego vehicle not found...")
     
         startPointX = (UI_CONSTS['LANE_WIDTH'] + UI_CONSTS['LANE_BOUNDARY_WIDTH']) * self.simArgs.getValue('lanes') + 10
         PointY = 10
         
-        agentLaneStr = "1. Agent lane : %d"%(vehicle.lane)
+        agentLaneStr = "1. Agent lane : %d"%(vehicle[LANE_MAP_INDEX_MAPPING['lane']])
         agentLaneStrText = self.str2font(agentLaneStr, self.fontNormal, self.colorBlack)
         self.screen.blit(agentLaneStrText, (startPointX, PointY))
         PointY += UI_CONSTS['INFO_BOARD_GAP']
 
-        agentSpeedStr = "2. Agent speed : %.2f km/hr"%(vehicle.speed * 3.6)
+        agentSpeedStr = "2. Agent speed : %.2f km/hr"%(vehicle[LANE_MAP_INDEX_MAPPING['speed']] * 3.6)
         agentSpeedStrText = self.str2font(agentSpeedStr, self.fontNormal, self.colorBlack)
         self.screen.blit(agentSpeedStrText, (startPointX, PointY))
         PointY += UI_CONSTS['INFO_BOARD_GAP']

@@ -27,3 +27,13 @@ IDM_CONSTS = {
     'MIN_SPACING': 2,
     'DELTA': 4 
 }
+
+# Index mapping for laneMap
+LANE_MAP_INDEX_MAPPING = {
+    'lane': 0,
+    'agent': 1,
+    'pos': 2,
+    'id': 3,
+    'speed': 4,
+    'acc':5
+}
