@@ -24,11 +24,17 @@ class ui:
         # Init clock
         self.initClock()
 
-        # Inti fonts
+        # Init fonts
         self.initFonts()
 
         # Init screen
         self.initScreen()
+
+        # Init images
+        self.initImages()
+
+        # Init construction board
+        self.initBoard()
         
     def initColors(self):
         self.roadColor = (97, 106, 107)
@@ -41,6 +47,13 @@ class ui:
         self.colorLime = (128, 250, 0)
         self.colorDarkGreen = (0, 120, 0)
         self.colorBlack = (0, 0, 0)
+    
+    def initBoard(self):
+        self.BoardX = (UI_CONSTS['LANE_WIDTH'] + UI_CONSTS['LANE_BOUNDARY_WIDTH']) * self.simArgs.getValue('lanes') + 20
+        self.BoardY = 0.0
+    
+    def initImages(self):
+        self.BoardImg = pygame.transform.scale(pygame.image.load('v2i/src/data/images/signBoard.png').convert_alpha(), (50, 50))
     
     def initLaneCoordinates(self):
         self.laneCoordinates = []
@@ -124,7 +137,7 @@ class ui:
         if vehicle is None:
             raiseValueError("ego vehicle not found...")
     
-        startPointX = (UI_CONSTS['LANE_WIDTH'] + UI_CONSTS['LANE_BOUNDARY_WIDTH']) * self.simArgs.getValue('lanes') + 10
+        startPointX = (UI_CONSTS['LANE_WIDTH'] + UI_CONSTS['LANE_BOUNDARY_WIDTH']) * self.simArgs.getValue('lanes') + 90
         PointY = 10
         
         agentLaneStr = "1. Agent lane : %d"%(vehicle[LANE_MAP_INDEX_MAPPING['lane']])
@@ -136,9 +149,13 @@ class ui:
         agentSpeedStrText = self.str2font(agentSpeedStr, self.fontNormal, self.colorBlack)
         self.screen.blit(agentSpeedStrText, (startPointX, PointY))
         PointY += UI_CONSTS['INFO_BOARD_GAP']
+    
+    def drawBoard(self, distTravelled):
+        self.BoardY += ((distTravelled * UI_CONSTS['SCALE']) % self.dimY)
+        self.screen.blit(self.BoardImg, [self.BoardX,self.BoardY])
 
     
-    def updateScreen(self, vehicles):
+    def updateScreen(self, vehicles, distTravelled):
         
         # Clear screen
         self.screen.fill(self.colorBG)
@@ -157,6 +174,9 @@ class ui:
 
         # Draw Information board
         self.drawInfoBoard(vehicles)
+
+        # Draw Construction board
+        self.drawBoard(distTravelled)
 
         # Draw all changes
         pygame.display.flip()

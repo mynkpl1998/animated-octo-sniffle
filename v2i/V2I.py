@@ -8,6 +8,7 @@ from v2i.src.core.constants import TRAFFIC_DENSITIES, SCENE_CONSTS, UI_CONSTS
 from v2i.src.core.common import raiseValueError
 from v2i.src.core.vehicle import vehicle
 from v2i.src.core.idm import idm
+from v2i.src.core.agentPlanner import agentPlanner
 from v2i.src.ui.ui import ui
 
 class V2I(gym.Env):
@@ -40,6 +41,9 @@ class V2I(gym.Env):
         
         # Intialize IDM handler here
         self.idmHandler = idm(self.simArgs)
+
+        # Initialize agent handler here
+        self.agentPlannerhandler = agentPlanner(self.simArgs)
     
     def initScenario(self):
         # Calculate maximum number of cars that can be accomodated in a lane
@@ -83,7 +87,6 @@ class V2I(gym.Env):
                     pass
                 else:
                     if np.random.rand() <= prob:
-                        #veh = vehicle(lane, False, pos, self.vehID, 0.0, 0.0)
                         # (lane, agent, position, vehicleID, speed, acceleration)
                         veh = [lane, False, pos, self.vehID, 0.0, 0.0]
                         self.vehID += 1
@@ -108,17 +111,22 @@ class V2I(gym.Env):
         
         # Get initial vehicles and thier positions
         self.initVehicles(prob)
-
         
         # Render to display
         if self.simArgs.getValue("render"):
-            self.uiHandler.updateScreen(self.laneMap)
+            self.uiHandler.initBoard()
+            self.uiHandler.updateScreen(self.laneMap, 0.0)
 
 
-    def step(self):
+    def step(self, action):
         
-        self.idmHandler.step(self.laneMap)
+        # Agent planner
+        collision, distTravelled = self.agentPlannerhandler.step(self.laneMap, action)
+
+        self.idmHandler.step(self.laneMap, distTravelled)
 
         # Render to display
         if self.simArgs.getValue("render"):
-            self.uiHandler.updateScreen(self.laneMap)
+            self.uiHandler.updateScreen(self.laneMap, distTravelled)
+        
+        return collision

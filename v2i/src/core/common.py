@@ -101,3 +101,14 @@ def mergeDicts(d1, d2):
 
 def sortListofList(laneMap, index, reverse=False):
     laneMap.sort(key = lambda laneMap: laneMap[index], reverse=reverse)
+
+def getAgent(laneMap, ):
+    agentLane = None
+    agentIndex = None
+
+    for lane in laneMap.keys():
+        for idx, veh in enumerate(laneMap[lane]):
+            if veh[LANE_MAP_INDEX_MAPPING['agent']]:
+                agentLane = lane
+                agentIndex = idx
+    return agentLane, agentIndex

@@ -59,11 +59,12 @@ class idm:
     
     def updateKey(self, laneMap, key, values):
         for idx, veh in enumerate(laneMap):
-            veh[LANE_MAP_INDEX_MAPPING[key]] = values[idx]
+            if not veh[LANE_MAP_INDEX_MAPPING['agent']]:
+                veh[LANE_MAP_INDEX_MAPPING[key]] = values[idx]
     
-    def step(self, laneMap):
+    def step(self, laneMap, agentDistTravelled):
         
-        # Sort the list in-place by post
+        # Sort the list in-place by pos
         for lane in range(0, self.simArgs.getValue('lanes')):
             sortListofList(laneMap[lane], LANE_MAP_INDEX_MAPPING['pos'], reverse=False)
         
@@ -82,6 +83,8 @@ class idm:
             distTravelledVec[distTravelledVec < 0] = 0.0
             newSpeedVec[newSpeedVec < 0] = 0.0
             # ---- Failsafe ---- #
+
+            distTravelledVec =  distTravelledVec - agentDistTravelled            
 
             newPosVec = self.newPosition(oldPos, distTravelledVec)
 
