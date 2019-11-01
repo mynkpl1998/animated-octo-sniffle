@@ -115,7 +115,7 @@ class V2I(gym.Env):
         # Render to display
         if self.simArgs.getValue("render"):
             self.uiHandler.initBoard()
-            self.uiHandler.updateScreen(self.laneMap, 0.0)
+            self.uiHandler.updateScreen(self.laneMap, 0.0, None, None)
 
 
     def step(self, action):
@@ -127,6 +127,6 @@ class V2I(gym.Env):
 
         # Render to display
         if self.simArgs.getValue("render"):
-            self.uiHandler.updateScreen(self.laneMap, distTravelled)
+            self.uiHandler.updateScreen(self.laneMap, distTravelled, action, None)
         
         return collision

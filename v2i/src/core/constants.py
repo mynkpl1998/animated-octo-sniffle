@@ -24,7 +24,7 @@ IDM_CONSTS = {
     'MAX_ACC': 0.73,
     'HEADWAY_TIME': 1.5,
     'DECELERATION_RATE': 1.67,
-    'MIN_SPACING': 2,
+    'MIN_SPACING': 2.0,
     'DELTA': 4 
 }
 

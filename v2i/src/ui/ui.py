@@ -131,7 +131,7 @@ class ui:
                     color = self.colorLime
                 self.drawRect(self.screen, color, (self.laneCoordinates[lane], pos * UI_CONSTS['SCALE']), UI_CONSTS['CAR_WIDTH'] , SCENE_CONSTS['CAR_LENGTH'] * UI_CONSTS['SCALE'], width=0)
     
-    def drawInfoBoard(self, vehicles):
+    def drawInfoBoard(self, vehicles, planAction, commAction):
         vehicle = getAgentObject(vehicles)
         
         if vehicle is None:
@@ -149,13 +149,19 @@ class ui:
         agentSpeedStrText = self.str2font(agentSpeedStr, self.fontNormal, self.colorBlack)
         self.screen.blit(agentSpeedStrText, (startPointX, PointY))
         PointY += UI_CONSTS['INFO_BOARD_GAP']
+
+        agentPlanActStr = "2. Planner action : %s"%(str(planAction))
+        agentPlanActStrText = self.str2font(agentPlanActStr, self.fontNormal, self.colorBlack)
+        self.screen.blit(agentPlanActStrText, (startPointX, PointY))
+        PointY += UI_CONSTS['INFO_BOARD_GAP']
     
     def drawBoard(self, distTravelled):
-        self.BoardY += ((distTravelled * UI_CONSTS['SCALE']) % self.dimY)
+        self.BoardY += (distTravelled * UI_CONSTS['SCALE'])
+        self.BoardY %=  self.dimY
         self.screen.blit(self.BoardImg, [self.BoardX,self.BoardY])
 
     
-    def updateScreen(self, vehicles, distTravelled):
+    def updateScreen(self, vehicles, distTravelled, planAction, commAction):
         
         # Clear screen
         self.screen.fill(self.colorBG)
@@ -173,7 +179,7 @@ class ui:
         self.drawCars(vehicles)
 
         # Draw Information board
-        self.drawInfoBoard(vehicles)
+        self.drawInfoBoard(vehicles, planAction, commAction)
 
         # Draw Construction board
         self.drawBoard(distTravelled)

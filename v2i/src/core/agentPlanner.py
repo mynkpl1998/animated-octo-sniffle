@@ -14,13 +14,17 @@ class agentPlanner:
     def distTravelled(self, speed, acc, tPeriod):
         return (speed*tPeriod) + (0.5 * acc * tPeriod * tPeriod)
     
+    def executeNothing(self, speed):
+        return np.clip(self.speed(speed, 0.0, self.simArgs.getValue('t-period')), 0.0, self.simArgs.getValue('max-speed')), np.clip(self.distTravelled(speed, 0.0, self.simArgs.getValue('t-period')), 0.0, None)
+    
     def executeDeceleration(self, speed):
         dec = None
         if speed <= 0.0:
             dec = 0.0
         else:
             dec = -IDM_CONSTS['DECELERATION_RATE']
-        return self.speed(speed, dec, self.simArgs.getValue('t-period')), self.distTravelled(speed, dec, self.simArgs.getValue('t-period'))
+        
+        return np.clip(self.speed(speed, dec, self.simArgs.getValue('t-period')), 0.0, self.simArgs.getValue('max-speed')), np.clip(self.distTravelled(speed, dec, self.simArgs.getValue('t-period')), 0.0, None)
     
     def executeAcc(self, speed):
         acc = None
@@ -28,7 +32,7 @@ class agentPlanner:
             acc = 0.0
         else:
             acc = IDM_CONSTS['MAX_ACC']
-        return self.speed(speed, acc, self.simArgs.getValue('t-period')), self.distTravelled(speed, acc, self.simArgs.getValue('t-period'))
+        return np.clip(self.speed(speed, acc, self.simArgs.getValue('t-period')), 0.0, self.simArgs.getValue('max-speed')), np.clip(self.distTravelled(speed, acc, self.simArgs.getValue('t-period')), 0.0, None)
     
     def checkCollision(self, laneMap, agentLane, agentIndex, dist):
         if agentIndex == 0:
@@ -60,6 +64,8 @@ class agentPlanner:
             newSpeed, distTrav = self.executeAcc(agentSpeed)
         elif action == 'dec':
             newSpeed, distTrav = self.executeDeceleration(agentSpeed)
+        elif action == 'do-nothing':
+            newSpeed, distTrav = self.executeNothing(agentSpeed)
         
         # Check for collision
         result = self.checkCollision(laneMap, agentLane, agentIndex, distTrav)
