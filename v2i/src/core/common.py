@@ -4,7 +4,7 @@ import pickle
 import numpy as np
 from huepy import bad, bold, red
 
-from v2i.src.core.constants import LANE_MAP_INDEX_MAPPING
+from v2i.src.core.constants import LANE_MAP_INDEX_MAPPING, SCENE_CONSTS
 
 def getAgentObject(laneMap):
     for lane in laneMap.keys():
@@ -102,6 +102,48 @@ def mergeDicts(d1, d2):
 def sortListofList(laneMap, index, reverse=False):
     laneMap.sort(key = lambda laneMap: laneMap[index], reverse=reverse)
 
+def removeVehicles(laneMap, low, high):
+    for lane in laneMap.keys():
+        newMap = []
+        for veh in laneMap[lane]:
+            if (veh[LANE_MAP_INDEX_MAPPING['pos']] >= (low - SCENE_CONSTS['CAR_LENGTH']) and veh[LANE_MAP_INDEX_MAPPING['pos']] <= high):
+                newMap.append(veh)
+        laneMap[lane] = newMap
+
+def addFromTop(laneMap, randomizeProb, args):    
+    # Check if any lane is empty. Add a vehicle from top.
+    pass
+
+def addFromBottom(laneMap, randomizeProb, args):
+    # Check if any lane is empty. Add a vehicle from bottom.
+    # Useful when agent is not moving at all and all vehicles leaves the scenes. 
+    for lane in range(0, args.getValue('lanes')):
+        if len(laneMap[lane]) == 0:
+            if np.random.rand() <= randomizeProb:
+                vehTup = [lane, False, SCENE_CONSTS['ROAD_LENGTH'], 0.0, 0.0]
+                laneMap[lane].append(vehTup)
+        else:
+            lastVehicle = laneMap[lane][-1]
+            lastVehicleRearBumperPosition = lastVehicle[LANE_MAP_INDEX_MAPPING['pos']] + SCENE_CONSTS['CAR_LENGTH']
+            distY2Bump = SCENE_CONSTS['ROAD_LENGTH'] - lastVehicleRearBumperPosition
+            if distY2Bump > (0 + SCENE_CONSTS['MIN_CAR_DISTANCE']):
+                if np.random.rand() <= randomizeProb:
+                    veh = [lane, False, SCENE_CONSTS['ROAD_LENGTH'], 0.0, 0.0]
+                    laneMap[lane].append(veh)
+
+
+def addVehicles(laneMap, randomizeProb, args, dist):
+
+    # Sort the list first before adding vehicles
+    for lane in range(0, args.getValue('lanes')):
+        sortListofList(laneMap[lane], LANE_MAP_INDEX_MAPPING['pos'], reverse=False)
+
+    if dist  == 0:
+        addFromBottom(laneMap, randomizeProb, args)
+    else:
+        print("Here")
+    
+    
 def getAgent(laneMap, ):
     agentLane = None
     agentIndex = None

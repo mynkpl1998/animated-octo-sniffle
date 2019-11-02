@@ -69,25 +69,27 @@ class idm:
             sortListofList(laneMap[lane], LANE_MAP_INDEX_MAPPING['pos'], reverse=False)
         
         for lane in range(0, self.simArgs.getValue('lanes')):
-            oldPos = self.getElementsbyKey(laneMap[lane], 'pos')
-            possDiff = self.posDiff(laneMap[lane])
-            speedDiff = self.relativeSpeed(laneMap[lane])
-            sAlpha = self.vecBumpBumpDistance(possDiff)
-            speed = self.getElementsbyKey(laneMap[lane], 'speed')
-            idmAcc = self.vecidmAcc(sAlpha, speedDiff, speed)
+            if len(laneMap[lane]) > 0:
+                oldPos = self.getElementsbyKey(laneMap[lane], 'pos')
+                possDiff = self.posDiff(laneMap[lane])
+                speedDiff = self.relativeSpeed(laneMap[lane])
+                sAlpha = self.vecBumpBumpDistance(possDiff)
+                speed = self.getElementsbyKey(laneMap[lane], 'speed')
+                idmAcc = self.vecidmAcc(sAlpha, speedDiff, speed)
 
-            distTravelledVec = self.vecDistTravelled(speed, idmAcc, self.simArgs.getValue('t-period'))
-            newSpeedVec = self.vecNewSpeed(speed, idmAcc, self.simArgs.getValue('t-period'))
-            
-            # ---- Failsafe ---- #
-            distTravelledVec[distTravelledVec < 0] = 0.0
-            newSpeedVec[newSpeedVec < 0] = 0.0
-            # ---- Failsafe ---- #
+                
+                distTravelledVec = self.vecDistTravelled(speed, idmAcc, self.simArgs.getValue('t-period'))
+                newSpeedVec = self.vecNewSpeed(speed, idmAcc, self.simArgs.getValue('t-period'))
+                
+                # ---- Failsafe ---- #
+                distTravelledVec[distTravelledVec < 0] = 0.0
+                newSpeedVec[newSpeedVec < 0] = 0.0
+                # ---- Failsafe ---- #
 
-            distTravelledVec =  distTravelledVec - agentDistTravelled            
+                distTravelledVec =  distTravelledVec - agentDistTravelled            
 
-            newPosVec = self.newPosition(oldPos, distTravelledVec)
+                newPosVec = self.newPosition(oldPos, distTravelledVec)
 
-            self.updateKey(laneMap[lane], 'pos', newPosVec)
-            self.updateKey(laneMap[lane], 'speed', newSpeedVec)
+                self.updateKey(laneMap[lane], 'pos', newPosVec)
+                self.updateKey(laneMap[lane], 'speed', newSpeedVec)
         

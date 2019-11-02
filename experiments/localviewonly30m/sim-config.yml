@@ -21,6 +21,6 @@ config:
   fps: 30
 
   # Scene settings
-  lanes: 3
+  lanes: 4
 
   

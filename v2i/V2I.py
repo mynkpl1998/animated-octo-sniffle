@@ -5,7 +5,7 @@ import numpy as np
 
 from v2i.src.core.utils import configParser
 from v2i.src.core.constants import TRAFFIC_DENSITIES, SCENE_CONSTS, UI_CONSTS
-from v2i.src.core.common import raiseValueError
+from v2i.src.core.common import raiseValueError, removeVehicles, addVehicles
 from v2i.src.core.vehicle import vehicle
 from v2i.src.core.idm import idm
 from v2i.src.core.agentPlanner import agentPlanner
@@ -73,7 +73,8 @@ class V2I(gym.Env):
         self.laneMap = {}
         for lane in range(0, self.simArgs.getValue("lanes")):
             self.laneMap[lane] = []
-
+        
+        self.episodeDensity = prob
         # Init id count
         self.vehID = 0
 
@@ -128,5 +129,11 @@ class V2I(gym.Env):
         # Render to display
         if self.simArgs.getValue("render"):
             self.uiHandler.updateScreen(self.laneMap, distTravelled, action, None)
+        
+        # Remove vehicles which gets out of frame
+        removeVehicles(self.laneMap, 0.0, SCENE_CONSTS['ROAD_LENGTH'])
+
+        # Add vehicles randomly into the frame
+        addVehicles(self.laneMap, self.episodeDensity, self.simArgs, distTravelled)
         
         return collision

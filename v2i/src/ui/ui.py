@@ -150,7 +150,7 @@ class ui:
         self.screen.blit(agentSpeedStrText, (startPointX, PointY))
         PointY += UI_CONSTS['INFO_BOARD_GAP']
 
-        agentPlanActStr = "2. Planner action : %s"%(str(planAction))
+        agentPlanActStr = "3. Planner action : %s"%(str(planAction))
         agentPlanActStrText = self.str2font(agentPlanActStr, self.fontNormal, self.colorBlack)
         self.screen.blit(agentPlanActStrText, (startPointX, PointY))
         PointY += UI_CONSTS['INFO_BOARD_GAP']
@@ -189,7 +189,6 @@ class ui:
         
         # Fps clock
         self.clock.tick(self.simArgs.getValue("fps"))
-
 
     
     
