@@ -4,8 +4,8 @@ import gym
 import numpy as np
 
 from v2i.src.core.utils import configParser
-from v2i.src.core.constants import TRAFFIC_DENSITIES, SCENE_CONSTS, UI_CONSTS
-from v2i.src.core.common import raiseValueError, removeVehicles, addVehicles
+from v2i.src.core.constants import TRAFFIC_DENSITIES, SCENE_CONSTS, UI_CONSTS, LANE_MAP_INDEX_MAPPING
+from v2i.src.core.common import raiseValueError, removeVehicles, addVehicles, getAgent
 from v2i.src.core.vehicle import vehicle
 from v2i.src.core.idm import idm
 from v2i.src.core.agentPlanner import agentPlanner
@@ -122,7 +122,11 @@ class V2I(gym.Env):
     def step(self, action):
         
         # Agent planner
+        agentlane, agentIndex = getAgent(self.laneMap)
+        agentoldSpeed = self.laneMap[agentlane][agentIndex][LANE_MAP_INDEX_MAPPING['speed']]
         collision, distTravelled = self.agentPlannerhandler.step(self.laneMap, action)
+        agentlane, agentIndex = getAgent(self.laneMap)
+        agentNewSpeed = self.laneMap[agentlane][agentIndex][LANE_MAP_INDEX_MAPPING['speed']]
 
         self.idmHandler.step(self.laneMap, distTravelled)
 

@@ -110,9 +110,23 @@ def removeVehicles(laneMap, low, high):
                 newMap.append(veh)
         laneMap[lane] = newMap
 
-def addFromTop(laneMap, randomizeProb, args):    
+def addFromTop(laneMap, randomizeProb, args):  
     # Check if any lane is empty. Add a vehicle from top.
-    pass
+    for lane in range(0, args.getValue('lanes')):
+        if len(laneMap[lane]) == 0:
+            if np.random.rand() <= randomizeProb:
+                vehTup = [lane, False, 0.0 - SCENE_CONSTS['CAR_LENGTH'], 0.0, 0.0]
+                laneMap[lane].append(vehTup)
+        else:
+            
+            topVehicle = laneMap[lane][0]
+            topVehicleReadBumperPosition = topVehicle[LANE_MAP_INDEX_MAPPING['pos']]
+            distYBump = topVehicleReadBumperPosition - 0.0
+            if distYBump > (0 + SCENE_CONSTS['MIN_CAR_DISTANCE']):
+                if np.random.rand() <= randomizeProb:
+                    veh = [lane, False, 0.0 - SCENE_CONSTS['CAR_LENGTH'], 0.0, 0.0]
+                    laneMap[lane].append(veh)
+            #pass
 
 def addFromBottom(laneMap, randomizeProb, args):
     # Check if any lane is empty. Add a vehicle from bottom.
@@ -134,15 +148,19 @@ def addFromBottom(laneMap, randomizeProb, args):
 
 def addVehicles(laneMap, randomizeProb, args, dist):
 
+    agentLane, agentIndex = getAgent(laneMap)
+    agentSpeed = laneMap[agentLane][agentIndex][LANE_MAP_INDEX_MAPPING['speed']]
+    ratio = agentSpeed / args.getValue('max-speed')
+    randomizeProb *= ratio
+    print(randomizeProb)
     # Sort the list first before adding vehicles
     for lane in range(0, args.getValue('lanes')):
         sortListofList(laneMap[lane], LANE_MAP_INDEX_MAPPING['pos'], reverse=False)
 
-    if dist  == 0:
+    if dist == 0:
         addFromBottom(laneMap, randomizeProb, args)
     else:
-        print("Here")
-    
+        addFromTop(laneMap, randomizeProb, args)    
     
 def getAgent(laneMap, ):
     agentLane = None

@@ -1,7 +1,7 @@
 import numpy as np
 
 from v2i.src.core.constants import SCENE_CONSTS, IDM_CONSTS, LANE_MAP_INDEX_MAPPING
-from v2i.src.core.common import sortListofList
+from v2i.src.core.common import sortListofList, getAgent
 
 class idm:
 
@@ -22,20 +22,26 @@ class idm:
             prop.append(veh[LANE_MAP_INDEX_MAPPING[key]])
         return np.array(prop)
     
-    def posDiff(self, laneMap):
+    def posDiff(self, laneMap, agentDistTravelled):
         a = self.getElementsbyKey(laneMap, 'pos')
         b = np.zeros(a.shape)
         b[1:] = a[0:-1]
         diff = a - b
-        diff[0] = 100.0
+        if agentDistTravelled:
+            diff[0] = 0.0
+        else:
+            diff[0] = a[0] - 0.0
         return diff
     
-    def relativeSpeed(self, laneMap):
+    def relativeSpeed(self, laneMap, agentSpeed, agentDistTravelled):
         a = self.getElementsbyKey(laneMap, 'speed')
         b = np.zeros(a.shape)
         b[1:] = a[0:-1]
         diff = a - b
-        diff[0] = 0.0
+        if agentDistTravelled:
+            diff[0] = a[0] - (agentSpeed/2.0)
+        else:
+            diff[0] = a[0] - (agentSpeed * 2.0)
         return diff
     
     def BumpBumpDist(self, gap):
@@ -63,6 +69,10 @@ class idm:
                 veh[LANE_MAP_INDEX_MAPPING[key]] = values[idx]
     
     def step(self, laneMap, agentDistTravelled):
+
+        # Get agent speed for calculating relative speed
+        agentLane, agentIndex = getAgent(laneMap)
+        agentSpeed = laneMap[agentLane][agentIndex][LANE_MAP_INDEX_MAPPING['speed']]
         
         # Sort the list in-place by pos
         for lane in range(0, self.simArgs.getValue('lanes')):
@@ -71,13 +81,13 @@ class idm:
         for lane in range(0, self.simArgs.getValue('lanes')):
             if len(laneMap[lane]) > 0:
                 oldPos = self.getElementsbyKey(laneMap[lane], 'pos')
-                possDiff = self.posDiff(laneMap[lane])
-                speedDiff = self.relativeSpeed(laneMap[lane])
+                possDiff = self.posDiff(laneMap[lane], agentDistTravelled)
+                speedDiff = self.relativeSpeed(laneMap[lane], agentSpeed, agentDistTravelled)
                 sAlpha = self.vecBumpBumpDistance(possDiff)
                 speed = self.getElementsbyKey(laneMap[lane], 'speed')
                 idmAcc = self.vecidmAcc(sAlpha, speedDiff, speed)
 
-                
+
                 distTravelledVec = self.vecDistTravelled(speed, idmAcc, self.simArgs.getValue('t-period'))
                 newSpeedVec = self.vecNewSpeed(speed, idmAcc, self.simArgs.getValue('t-period'))
                 
